@@ -1,0 +1,26 @@
+FROM elixir:1.19.5-otp-28-slim
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    LANG=C.UTF-8 \
+    LC_ALL=C.UTF-8 \
+    ELIXIR_ERL_OPTIONS=+fnu \
+    MIX_ENV=dev
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      curl \
+      git \
+      inotify-tools \
+      nodejs \
+      npm \
+      postgresql-client && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+RUN mix local.hex --force && mix local.rebar --force
+
+EXPOSE 4225
+
+CMD ["mix", "phx.server"]
