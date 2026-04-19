@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useRef, useState } from "react";
-import { Circle, Layer, Line, Stage, Text } from "react-konva";
+import { Circle, Layer, Line, Shape, Stage, Text } from "react-konva";
 
+import type { Context as KonvaContext } from "konva/lib/Context";
 import type { KonvaEventObject } from "konva/lib/Node";
 import type { Stage as KonvaStage } from "konva/lib/Stage";
 
@@ -190,22 +191,53 @@ function bondCurve(bond: Bond, atomIndex: Map<string, Atom>) {
   return { start, end, control, midpoint, normal, length };
 }
 
-function arrowHeadPoints(control: Point, end: Point) {
-  const tangent = normalize({ x: end.x - control.x, y: end.y - control.y });
-  const normal = perpendicular(tangent);
-  const base = {
-    x: end.x - tangent.x * BOND_HEAD_LENGTH,
-    y: end.y - tangent.y * BOND_HEAD_LENGTH
+function arrowHeadGeometry(
+  endpoint: BondEndpoint,
+  control: Point,
+  end: Point,
+  atomIndex: Map<string, Atom>
+) {
+  const direction =
+    endpoint.kind === "attached"
+      ? (() => {
+          const atom = atomIndex.get(endpoint.atomId);
+
+          if (!atom) {
+            return normalize({ x: end.x - control.x, y: end.y - control.y });
+          }
+
+          return normalize({ x: atom.x - end.x, y: atom.y - end.y });
+        })()
+      : normalize({ x: end.x - control.x, y: end.y - control.y });
+
+  const normal = perpendicular(direction);
+  const shaftEnd = {
+    x: end.x - direction.x * BOND_HEAD_LENGTH,
+    y: end.y - direction.y * BOND_HEAD_LENGTH
   };
 
-  return [
-    end.x,
-    end.y,
-    base.x + normal.x * (BOND_HEAD_WIDTH / 2),
-    base.y + normal.y * (BOND_HEAD_WIDTH / 2),
-    base.x - normal.x * (BOND_HEAD_WIDTH / 2),
-    base.y - normal.y * (BOND_HEAD_WIDTH / 2)
-  ];
+  return {
+    shaftEnd,
+    headPoints: [
+      end.x,
+      end.y,
+      shaftEnd.x + normal.x * (BOND_HEAD_WIDTH / 2),
+      shaftEnd.y + normal.y * (BOND_HEAD_WIDTH / 2),
+      shaftEnd.x - normal.x * (BOND_HEAD_WIDTH / 2),
+      shaftEnd.y - normal.y * (BOND_HEAD_WIDTH / 2)
+    ]
+  };
+}
+
+function drawQuadraticCurve(
+  ctx: KonvaContext,
+  start: Point,
+  control: Point,
+  end: Point
+) {
+  ctx.beginPath();
+  ctx.moveTo(start.x, start.y);
+  ctx.quadraticCurveTo(control.x, control.y, end.x, end.y);
 }
 
 function setBondEndpoint(bond: Bond, endpointKey: EndpointKey, endpoint: BondEndpoint): Bond {
@@ -959,42 +991,29 @@ export function SchemaApp({ schemaCode }: SchemaAppProps) {
             {bonds.map((bond) => {
               const curve = bondCurve(bond, atomIndex);
               const selected = selection?.kind === "bond" && selection.id === bond.id;
+              const head = arrowHeadGeometry(bond.end, curve.control, curve.end, atomIndex);
 
               return (
                 <React.Fragment key={bond.id}>
-                  <Line
-                    points={[
-                      curve.start.x,
-                      curve.start.y,
-                      curve.control.x,
-                      curve.control.y,
-                      curve.end.x,
-                      curve.end.y
-                    ]}
-                    bezier
-                    stroke="rgba(15, 23, 42, 0)"
-                    strokeWidth={22}
-                    onMouseDown={(event) => handleBondSelect(event, bond.id)}
-                  />
-                  <Line
-                    points={[
-                      curve.start.x,
-                      curve.start.y,
-                      curve.control.x,
-                      curve.control.y,
-                      curve.end.x,
-                      curve.end.y
-                    ]}
-                    bezier
+                  <Shape
+                    sceneFunc={(ctx, shape) => {
+                      drawQuadraticCurve(ctx, curve.start, curve.control, head.shaftEnd);
+                      ctx.strokeShape(shape);
+                    }}
                     stroke={selected ? "#f8fafc" : "#cbd5e1"}
                     strokeWidth={selected ? 4.5 : 3}
                     lineCap="round"
-                    listening={false}
+                    lineJoin="round"
+                    hitStrokeWidth={22}
+                    onMouseDown={(event) => handleBondSelect(event, bond.id)}
                   />
                   <Line
-                    points={arrowHeadPoints(curve.control, curve.end)}
+                    points={head.headPoints}
                     closed
                     fill={selected ? "#f8fafc" : "#cbd5e1"}
+                    stroke={selected ? "#f8fafc" : "#cbd5e1"}
+                    strokeWidth={1.25}
+                    lineJoin="round"
                     listening={false}
                   />
 
@@ -1058,22 +1077,33 @@ export function SchemaApp({ schemaCode }: SchemaAppProps) {
                 x: midpoint.x + normalize(perpendicular(delta)).x * length * BOND_CURVATURE,
                 y: midpoint.y + normalize(perpendicular(delta)).y * length * BOND_CURVATURE
               };
+              const head = arrowHeadGeometry(
+                { kind: "free", x: draftBond.current.x, y: draftBond.current.y },
+                control,
+                draftBond.current,
+                atomIndex
+              );
 
               return (
                 <>
-                  <Line
-                    points={[start.x, start.y, control.x, control.y, draftBond.current.x, draftBond.current.y]}
-                    bezier
+                  <Shape
+                    sceneFunc={(ctx, shape) => {
+                      drawQuadraticCurve(ctx, start, control, head.shaftEnd);
+                      ctx.strokeShape(shape);
+                    }}
                     stroke="#67e8f9"
                     strokeWidth={3}
                     lineCap="round"
+                    lineJoin="round"
                     dash={[10, 12]}
                     listening={false}
                   />
                   <Line
-                    points={arrowHeadPoints(control, draftBond.current)}
+                    points={head.headPoints}
                     closed
                     fill="#67e8f9"
+                    stroke="#67e8f9"
+                    strokeWidth={1.25}
                     listening={false}
                   />
                 </>
