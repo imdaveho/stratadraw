@@ -1,46 +1,52 @@
 name: stratadraw
 services:
   stratadraw:
-    image: localhost/stratadraw:0.3.0
+    build:
+      context: .
+      dockerfile: Containerfile.dev
     environment:
       MIX_ENV: dev
-      PHX_SERVER: "true"
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
+      ELIXIR_ERL_OPTIONS: "+fnu"
       PHX_BIND_ALL: "true"
+      PHX_HOST: localhost
       PORT: "4225"
-      PGHOST: stratadraw-db
+      PGHOST: db
       PGPORT: "5432"
       PGUSER: postgres
       PGPASSWORD: postgres
       PGDATABASE: stratadraw_dev
-    depends_on:
-      stratadraw-db:
-        condition: service_healthy
     ports:
       - "4225:4225"
     volumes:
       - .:/app:Z
-      - stratadraw_deps:/app/deps
-      - stratadraw_build:/app/_build
-      - stratadraw_node_modules:/app/assets/node_modules
+      - stratadraw_build:/app/_build:Z
+      - stratadraw_deps:/app/deps:Z
+      - stratadraw_node_modules:/app/assets/node_modules:Z
+    depends_on:
+      - db
+    command: >
+      sh -lc 'until pg_isready -h "$PGHOST" -p "$PGPORT" -U "$PGUSER" -d "$PGDATABASE"; do sleep 1; done &&
+      mix deps.get &&
+      mix assets.setup &&
+      (mix ecto.create || true) &&
+      mix ecto.migrate &&
+      mix phx.server'
 
-  stratadraw-db:
-    image: docker.io/library/postgres:16
+  db:
+    image: postgres:17-alpine
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: stratadraw_dev
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d stratadraw_dev"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
     ports:
       - "5432:5432"
     volumes:
       - stratadraw_postgres:/var/lib/postgresql/data
 
 volumes:
-  stratadraw_deps:
   stratadraw_build:
+  stratadraw_deps:
   stratadraw_node_modules:
   stratadraw_postgres:

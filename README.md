@@ -1,55 +1,75 @@
 # Stratadraw
 
-An open canvas geared towards documenting and representing product, technical, and business capabilities/functionality and interactions as a context graph of atomic nodes and edges.
-This follows the approach set forth by this collection of thoughts and considerations: [Atomic Patterns](https://atomicpatterns.imdaveho.com/5.+posts/Chapter+3%EA%9E%89+Atomic+Patterns/Atomic+Patterns)
+Phoenix + React + Konva scaffold for an anonymous multi-user schema editor.
 
-## Stack
+Current MVP slice
+- minimal landing page with schema code entry
+- schema workspace route at `/schemas/:code`
+- hand and cursor tools
+- double-click empty space to create atoms
+- drag atoms in cursor mode
+- drag from an atom edge to create bonds
+- free bonds with draggable endpoints and curvature handle
+- right-click or toolbar placement for annotation threads
+- stage pan and wheel zoom in hand mode, with temporary hand mode via `Space`
 
-- Phoenix 1.8 + Bandit + Postgres
-- React + TypeScript + Konva in `assets/`
-- Phoenix Channels + Presence for realtime canvas sync
-- Yjs + CodeMirror for collaborative markdown documents
+## Local development
 
-## Local Development
+Required toolchain
+- Erlang/OTP `28.4.2`
+- Elixir `1.19.5-otp-28`
+- Node/npm
+- PostgreSQL
 
-1. Install Elixir 1.19.5, Erlang/OTP 28.1, Node.js, npm, and Postgres.
-2. Run `mix setup`.
-3. Start the app with `mix phx.server`.
-4. Visit `http://localhost:4000`.
+This repo includes `.tool-versions` for `asdf`.
 
-Useful commands:
+Setup
+```bash
+mix setup
+mix ecto.create
+mix ecto.migrate
+mix phx.server
+```
 
-- `mix format && mix compile && mix assets.build`
-- `mix test`
-- `mix ecto.reset`
+Open `http://localhost:4000`.
 
-Database env overrides used by dev and test configs:
+Environment variables used in development
+- `PGHOST` default `localhost`
+- `PGPORT` default `5432`
+- `PGUSER` default `postgres`
+- `PGPASSWORD` default `postgres`
+- `PGDATABASE` default `stratadraw_dev`
+- `PHX_BIND_ALL=true` to bind Phoenix to `0.0.0.0`
+- `PORT` default `4000`
 
-- `PGHOST`
-- `PGPORT`
-- `PGUSER`
-- `PGPASSWORD`
-- `PGDATABASE`
-- `PGDATABASE_TEST`
+## Containers
 
-## Rootless Podman
-
-First-time setup:
-
-1. `PODMAN_COMPOSE_PROVIDER=podman-compose podman compose build`
-2. `PODMAN_COMPOSE_PROVIDER=podman-compose podman compose run --rm app mix setup`
-
-Run the app:
-
-1. `PODMAN_COMPOSE_PROVIDER=podman-compose podman compose up`
-2. Open `http://127.0.0.1:4225`
-
-The app container bootstraps Hex and Rebar into container-managed volumes so `userns_mode: keep-id` works with `mix setup` and `mix phx.server`.
-
-The repo-local container files are:
-
-- `Containerfile`
+Development container files
+- `Containerfile.dev`
 - `compose.yaml`
 
-The compose stack is designed for rootless Podman with `userns_mode: keep-id` and host ports bound to `127.0.0.1`.
-The app container uses `docker.io/library/elixir:1.19.5`.
+Start the app and Postgres with Docker or Podman Compose:
+```bash
+docker compose up --build
+```
+
+or
+
+```bash
+podman compose up --build
+```
+
+The compose app service waits for Postgres, installs deps, runs migrations, and starts Phoenix on `http://localhost:4225`.
+
+Production build
+- `Containerfile` builds a release image for `stratadraw`
+
+## Verification
+
+Available checks
+```bash
+mix assets.build
+mix precommit
+```
+
+Note: `mix precommit` requires a reachable PostgreSQL server because the test alias creates and migrates the test database.

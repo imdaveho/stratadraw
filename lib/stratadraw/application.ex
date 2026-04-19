@@ -12,7 +12,6 @@ defmodule Stratadraw.Application do
       Stratadraw.Repo,
       {DNSCluster, query: Application.get_env(:stratadraw, :dns_cluster_query) || :ignore},
       {Phoenix.PubSub, name: Stratadraw.PubSub},
-      StratadrawWeb.Presence,
       # Start a worker by calling: Stratadraw.Worker.start_link(arg)
       # {Stratadraw.Worker, arg},
       # Start to serve requests, typically the last entry

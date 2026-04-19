@@ -7,22 +7,9 @@
 # General application configuration
 import Config
 
-config :stratadraw, :scopes,
-  user: [
-    default: true,
-    module: Stratadraw.Accounts.Scope,
-    assign_key: :current_scope,
-    access_path: [:user, :id],
-    schema_key: :user_id,
-    schema_type: :binary_id,
-    schema_table: :users,
-    test_data_fixture: Stratadraw.AccountsFixtures,
-    test_setup_helper: :register_and_log_in_user
-  ]
-
 config :stratadraw,
   ecto_repos: [Stratadraw.Repo],
-  generators: [timestamp_type: :utc_datetime, binary_id: true]
+  generators: [timestamp_type: :utc_datetime]
 
 # Configure the endpoint
 config :stratadraw, StratadrawWeb.Endpoint,
@@ -33,36 +20,16 @@ config :stratadraw, StratadrawWeb.Endpoint,
     layout: false
   ],
   pubsub_server: Stratadraw.PubSub,
-  live_view: [signing_salt: "wReMVTZV"]
-
-# Configure the mailer
-#
-# By default it uses the "Local" adapter which stores the emails
-# locally. You can see the emails in your browser, at "/dev/mailbox".
-#
-# For production it's recommended to configure a different adapter
-# at the `config/runtime.exs`.
-config :stratadraw, Stratadraw.Mailer, adapter: Swoosh.Adapters.Local
+  live_view: [signing_salt: "l23MlxYC"]
 
 # Configure esbuild (the version is required)
 config :esbuild,
   version: "0.25.4",
   stratadraw: [
     args:
-      ~w(js/app.js --bundle --target=es2022 --outdir=../priv/static/assets/js --external:/fonts/* --external:/images/* --alias:@=.),
+      ~w(js/app.tsx --bundle --target=es2022 --outdir=../priv/static/assets/js --external:/fonts/* --external:/images/* --alias:@=.),
     cd: Path.expand("../assets", __DIR__),
     env: %{"NODE_PATH" => [Path.expand("../deps", __DIR__), Mix.Project.build_path()]}
-  ]
-
-# Configure tailwind (the version is required)
-config :tailwind,
-  version: "4.1.12",
-  stratadraw: [
-    args: ~w(
-      --input=assets/css/app.css
-      --output=priv/static/assets/css/app.css
-    ),
-    cd: Path.expand("..", __DIR__)
   ]
 
 # Configure Elixir's Logger

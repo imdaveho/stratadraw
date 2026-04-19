@@ -1,95 +1,46 @@
-<Layouts.flash_group flash={@flash} />
-
-<section class="mx-auto flex max-w-6xl flex-col gap-16 px-4 py-16 sm:px-6 lg:px-8 lg:py-24">
-  <div class="grid gap-12 lg:grid-cols-[minmax(0,1fr)_28rem] lg:items-center">
-    <div>
-      <p class="text-sm uppercase tracking-[0.25em] text-primary">
-        Atomic patterns for capability mapping
-      </p>
-      <h1 class="mt-5 text-5xl font-semibold tracking-tight text-balance sm:text-6xl">
-        Draw atoms, connect them with bonds, and collaborate in real time.
+<Layouts.app flash={@flash}>
+  <section class="landing-shell">
+    <div class="landing-card">
+      <p class="landing-eyebrow">Schema Workspace</p>
+      <h1 class="landing-title">
+        Open a schema and start drawing atoms, bonds, and annotations.
       </h1>
-      <p class="mt-6 max-w-2xl text-lg leading-8 text-base-content/70">
-        Stratadraw is an infinite canvas for business, product, and technical capability maps. Capture a pattern, document each atom, and work live with your team.
+      <p class="landing-copy">
+        Use any shared code for now. Users are anonymous in this scaffold while the core canvas
+        interactions come together.
       </p>
 
-      <div class="mt-8 flex flex-wrap gap-4">
-        <.link href={~p"/users/register"} class="btn btn-primary btn-lg">Create an account</.link>
-        <.link href={~p"/users/log-in"} class="btn btn-ghost btn-lg">Log in</.link>
+      <.form
+        :let={form}
+        for={to_form(%{"code" => ""}, as: :schema)}
+        action={~p"/schemas/open"}
+        method="get"
+        id="schema-code-form"
+        class="landing-form"
+      >
+        <.input
+          field={form[:code]}
+          type="text"
+          label="Schema code"
+          required
+          autocomplete="off"
+          placeholder="orbit-map"
+          class="landing-input"
+          error_class="landing-input landing-input--error"
+        />
+        <.button class="landing-submit">Open schema</.button>
+      </.form>
+
+      <div class="landing-shortcuts">
+        <p>
+          <strong>Mouse:</strong>
+          double-click empty space to add an atom, right-click to annotate.
+        </p>
+        <p>
+          <strong>Tools:</strong>
+          hand pans and zooms, cursor edits atoms and bonds, Space temporarily grabs the canvas.
+        </p>
       </div>
     </div>
-
-    <div class="rounded-[2rem] border border-base-300 bg-neutral text-neutral-content shadow-2xl">
-      <div class="border-b border-white/10 px-6 py-4 text-sm uppercase tracking-[0.18em] text-white/55">
-        Canvas surface
-      </div>
-      <div class="space-y-5 px-6 py-6">
-        <div class="rounded-2xl bg-white/8 p-4">
-          <p class="text-sm text-white/55">Toolbar</p>
-          <div class="mt-3 flex items-center justify-center gap-2">
-            <span class="rounded-full bg-white/10 px-4 py-2 text-xs">Pan</span>
-            <span class="rounded-full bg-white/20 px-4 py-2 text-xs">Select</span>
-            <span class="rounded-full bg-cyan-400/25 px-4 py-2 text-xs">Atom</span>
-            <span class="rounded-full bg-violet-400/25 px-4 py-2 text-xs">Bond</span>
-            <span class="rounded-full bg-amber-300/25 px-4 py-2 text-xs">Annotation</span>
-          </div>
-        </div>
-
-        <div class="relative overflow-hidden rounded-[1.5rem] border border-white/10 bg-[#07131c] p-4">
-          <div class="absolute inset-0 opacity-30 stratadraw-hero-grid"></div>
-          <div class="relative flex h-80 items-center justify-center">
-            <div class="absolute left-10 top-12 rounded-full border-4 border-cyan-200 bg-cyan-400/85 px-8 py-6 text-sm font-medium text-slate-950 shadow-xl">
-              Capability
-            </div>
-            <div class="absolute right-8 bottom-10 rounded-full border-4 border-violet-200 bg-violet-400/85 px-8 py-6 text-sm font-medium text-slate-950 shadow-xl">
-              Outcome
-            </div>
-            <svg class="pointer-events-none absolute inset-0 h-full w-full" viewBox="0 0 400 240">
-              <path
-                d="M120 80C180 70 230 85 300 150"
-                fill="none"
-                stroke="#f8fafc"
-                stroke-width="4"
-              />
-              <path
-                d="M289 141l14 9-16 3"
-                fill="none"
-                stroke="#f8fafc"
-                stroke-width="4"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-            <div class="absolute right-3 top-3 w-36 rounded-2xl bg-white/10 p-3 text-xs text-white/75 backdrop-blur">
-              <p class="font-semibold text-white">Atom notes</p>
-              <p class="mt-2">
-                Capture markdown docs, capability links, and shared annotations.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="grid gap-6 md:grid-cols-3">
-    <div class="rounded-3xl border border-base-300 bg-base-100 p-6 shadow-sm">
-      <h2 class="text-xl font-semibold">Atoms as circles</h2>
-      <p class="mt-3 text-sm text-base-content/65">
-        Double click to edit labels, drag to reposition, and open rich documentation in the side panel.
-      </p>
-    </div>
-    <div class="rounded-3xl border border-base-300 bg-base-100 p-6 shadow-sm">
-      <h2 class="text-xl font-semibold">Curved bonds</h2>
-      <p class="mt-3 text-sm text-base-content/65">
-        Snap arrows between atoms and adjust bond curvature directly on the canvas.
-      </p>
-    </div>
-    <div class="rounded-3xl border border-base-300 bg-base-100 p-6 shadow-sm">
-      <h2 class="text-xl font-semibold">Shared markdown</h2>
-      <p class="mt-3 text-sm text-base-content/65">
-        Collaborators can edit annotations and atom docs together over Phoenix websockets.
-      </p>
-    </div>
-  </div>
-</section>
+  </section>
+</Layouts.app>

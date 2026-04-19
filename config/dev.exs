@@ -1,19 +1,18 @@
 import Config
 
+db_host = System.get_env("PGHOST") || "localhost"
+db_port = String.to_integer(System.get_env("PGPORT") || "5432")
 db_username = System.get_env("PGUSER") || "postgres"
 db_password = System.get_env("PGPASSWORD") || "postgres"
-db_hostname = System.get_env("PGHOST") || "localhost"
-db_port = String.to_integer(System.get_env("PGPORT") || "5432")
 db_name = System.get_env("PGDATABASE") || "stratadraw_dev"
-
-http_ip = if System.get_env("PHX_BIND_ALL") in ~w(true 1), do: {0, 0, 0, 0}, else: {127, 0, 0, 1}
-http_port = String.to_integer(System.get_env("PORT") || "4225")
+bind_all = System.get_env("PHX_BIND_ALL") in ~w(true 1)
+port = String.to_integer(System.get_env("PORT") || "4000")
 
 # Configure your database
 config :stratadraw, Stratadraw.Repo,
   username: db_username,
   password: db_password,
-  hostname: db_hostname,
+  hostname: db_host,
   port: db_port,
   database: db_name,
   stacktrace: true,
@@ -27,16 +26,15 @@ config :stratadraw, Stratadraw.Repo,
 # watchers to your application. For example, we can use it
 # to bundle .js and .css sources.
 config :stratadraw, StratadrawWeb.Endpoint,
-  # Binding to loopback ipv4 address prevents access from other machines.
-  # Change to `ip: {0, 0, 0, 0}` to allow access from other machines.
-  http: [ip: http_ip, port: http_port],
+  http: [ip: if(bind_all, do: {0, 0, 0, 0}, else: {127, 0, 0, 1}), port: port],
   check_origin: false,
   code_reloader: true,
   debug_errors: true,
-  secret_key_base: "tCLReFjEbGUq95WuiQln06R4VuwBXD4ude5grqQ1sKnPHI06QeneJye6yxqp9hCD",
+  secret_key_base:
+    System.get_env("SECRET_KEY_BASE") ||
+      "fgnBuziS7n+vAiQCWBDm/vA2fvIdklgdLobGauFjXhZpnS0AYYJLuvHQueGVpNiO",
   watchers: [
-    esbuild: {Esbuild, :install_and_run, [:stratadraw, ~w(--sourcemap=inline --watch)]},
-    tailwind: {Tailwind, :install_and_run, [:stratadraw, ~w(--watch)]}
+    esbuild: {Esbuild, :install_and_run, [:stratadraw, ~w(--sourcemap=inline --watch)]}
   ]
 
 # ## SSL Support
@@ -68,12 +66,10 @@ config :stratadraw, StratadrawWeb.Endpoint,
     web_console_logger: true,
     patterns: [
       # Static assets, except user uploads
-      ~r"priv/static/(?!uploads/).*\.(js|css|png|jpeg|jpg|gif|svg)$",
-      # Gettext translations
-      ~r"priv/gettext/.*\.po$",
+      ~r"priv/static/(?!uploads/).*\.(js|css|png|jpeg|jpg|gif|svg)$"E,
       # Router, Controllers, LiveViews and LiveComponents
-      ~r"lib/stratadraw_web/router\.ex$",
-      ~r"lib/stratadraw_web/(controllers|live|components)/.*\.(ex|heex)$"
+      ~r"lib/stratadraw_web/router\.ex$"E,
+      ~r"lib/stratadraw_web/(controllers|live|components)/.*\.(ex|heex)$"E
     ]
   ]
 
@@ -97,6 +93,3 @@ config :phoenix_live_view,
   debug_attributes: true,
   # Enable helpful, but potentially expensive runtime checks
   enable_expensive_runtime_checks: true
-
-# Disable swoosh api client as it is only required for production adapters.
-config :swoosh, :api_client, false
