@@ -1,36 +1,29 @@
+name: stratadraw
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Containerfile
+  stratadraw:
     image: localhost/stratadraw:0.3.0
-    init: true
-    userns_mode: keep-id
-    working_dir: /app
     environment:
       MIX_ENV: dev
       PHX_SERVER: "true"
-      PHX_HOST: localhost
       PHX_BIND_ALL: "true"
       PORT: "4225"
-      PGHOST: db
+      PGHOST: stratadraw-db
       PGPORT: "5432"
       PGUSER: postgres
       PGPASSWORD: postgres
       PGDATABASE: stratadraw_dev
-    command: bash -lc "mix phx.server"
     depends_on:
-      db:
+      stratadraw-db:
         condition: service_healthy
     ports:
-      - "127.0.0.1:4225:4225"
+      - "4225:4225"
     volumes:
       - .:/app:Z
       - stratadraw_deps:/app/deps
       - stratadraw_build:/app/_build
       - stratadraw_node_modules:/app/assets/node_modules
 
-  db:
+  stratadraw-db:
     image: docker.io/library/postgres:16
     environment:
       POSTGRES_USER: postgres
@@ -42,12 +35,12 @@ services:
       timeout: 5s
       retries: 20
     ports:
-      - "127.0.0.1:5432:5432"
+      - "5432:5432"
     volumes:
       - stratadraw_postgres:/var/lib/postgresql/data
 
 volumes:
-  stratadraw_build:
   stratadraw_deps:
+  stratadraw_build:
   stratadraw_node_modules:
   stratadraw_postgres:

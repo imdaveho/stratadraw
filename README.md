@@ -44,6 +44,8 @@ Run the app:
 1. `PODMAN_COMPOSE_PROVIDER=podman-compose podman compose up`
 2. Open `http://127.0.0.1:4225`
 
+The app container bootstraps Hex and Rebar into container-managed volumes so `userns_mode: keep-id` works with `mix setup` and `mix phx.server`.
+
 The repo-local container files are:
 
 - `Containerfile`

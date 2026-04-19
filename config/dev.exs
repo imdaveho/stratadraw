@@ -7,7 +7,7 @@ db_port = String.to_integer(System.get_env("PGPORT") || "5432")
 db_name = System.get_env("PGDATABASE") || "stratadraw_dev"
 
 http_ip = if System.get_env("PHX_BIND_ALL") in ~w(true 1), do: {0, 0, 0, 0}, else: {127, 0, 0, 1}
-http_port = String.to_integer(System.get_env("PORT") || "4000")
+http_port = String.to_integer(System.get_env("PORT") || "4225")
 
 # Configure your database
 config :stratadraw, Stratadraw.Repo,
